@@ -1,0 +1,2 @@
+/* Fix 1: tell iOS these are plain taps (no double-tap-to-zoom wait/eat). Add to begin.css. */
+.dp-field,.dp-pop button{touch-action:manipulation}

@@ -1,0 +1,61 @@
+/* The CSS the date picker depends on, copied verbatim (in source order) from the page under test. */
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+:root{--cream:#dddad4;--paper:#ebe9e5;--brown:#3a2c2b;--gold:#a98b50;--line:#c8b8a4;--muted:#5b4743;--evergreen:#445c51}
+body{margin:0;background:var(--cream);color:var(--brown);font-family:'Manrope',Arial,sans-serif;font-size:15px;line-height:1.65}
+button,input,select{font:inherit}
+button{cursor:pointer;color:inherit}
+button{border:0;background:none}
+label{display:flex;flex-direction:column;font-size:11px;gap:10px}
+input:not([type=checkbox]),textarea{font:14px/1.6 'Manrope',sans-serif;background:transparent;color:var(--brown);width:100%;min-width:0;border:0;border-bottom:1px solid #a98b50;border-radius:0;padding:12px 0;outline-offset:4px}
+label.f{display:block;font-size:10px;letter-spacing:1.4px;font-weight:600;text-transform:uppercase;color:var(--brown)}
+label.f[hidden]{display:none}
+label.f .f-opt{font-weight:400;letter-spacing:.3px;text-transform:none;color:var(--muted);margin-left:4px}
+.f input,.f select,.f textarea{display:block;margin-top:8px;font:inherit;font-size:15px;letter-spacing:0;text-transform:none;font-weight:400;color:var(--brown);background:var(--paper);border:1px solid var(--line);padding:12px 14px;border-radius:0;width:100%;transition:border-color .3s,box-shadow .3s}
+.f textarea{min-height:92px;resize:vertical}
+.f input:hover,.f select:hover,.f textarea:hover{border-color:#b5a892}
+.f input:focus,.f select:focus,.f textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(169,139,80,.2)}
+.f input[aria-invalid=true]{border-color:#8a3b2e}
+.date-note{display:block;margin-top:6px;font-size:11px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--muted)}
+.date-note:empty{display:none}
+.date-note.is-warning{color:#8a3b2e}
+.dp{position:relative;display:block;margin-top:8px}
+label.f .dp{margin-top:8px}
+.dp-field{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;min-height:46px;padding:11px 14px;background:var(--paper);border:1px solid var(--line);font:inherit;font-size:15px;color:var(--brown);text-align:left;text-transform:none;letter-spacing:0;font-weight:400;transition:border-color .3s,box-shadow .3s}
+.dp-field:hover{border-color:#b5a892}
+.dp-field[aria-expanded=true],.dp-field:focus-visible{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(169,139,80,.2)}
+.dp-field.is-empty span{color:#8b7d74}
+.dp-icon{width:16px;height:15px;border:1.5px solid currentColor;border-top-width:4px;border-radius:2px;opacity:.6;flex:0 0 16px}
+.dp-pop{position:absolute;z-index:40;top:calc(100% + 6px);left:0;width:min(330px,calc(100vw - 32px));background:#f4f2ee;border:1px solid var(--line);box-shadow:0 24px 50px -26px rgba(58,44,43,.55);padding:14px;text-transform:none;letter-spacing:0;font-weight:400;animation:dp-in .25s ease}
+.dp-pop[hidden]{display:none}
+@keyframes dp-in{from{opacity:0;transform:translateY(-4px)}}
+.dp-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.dp-head strong{font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:400}
+.dp-nav{width:34px;height:34px;border:1px solid var(--line);font-size:18px;line-height:1}
+.dp-nav:disabled{opacity:.3;cursor:default}
+.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.dp-wd{font-size:9px;letter-spacing:1px;color:var(--muted);text-align:center;padding:4px 0}
+.dp-day{height:38px;font-size:13px;color:var(--brown);border:1px solid transparent;transition:background .2s,border-color .2s}
+.dp-day:hover:not(:disabled):not(.is-busy){border-color:var(--gold);background:#fff}
+.dp-day[aria-pressed=true]{background:var(--brown);color:var(--paper)}
+.dp-day.is-soon{color:#b9afa6;cursor:not-allowed}
+.dp-day.is-busy{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1;color:#7a6560;cursor:not-allowed;background:repeating-linear-gradient(135deg,rgba(58,44,43,.06) 0 4px,rgba(58,44,43,.16) 4px 5px);border-color:rgba(58,44,43,.18)}
+.dp-day.is-busy small{font-size:6.5px;letter-spacing:.4px;text-transform:uppercase;color:#9e7f42}
+.dp-day.is-busy:hover{border-color:rgba(58,44,43,.35)}
+.dp-reserved-note{margin:8px 2px 0;padding:8px 10px;border-left:2px solid #a98b50;background:rgba(169,139,80,.1);font-size:12px;line-height:1.5;color:var(--brown)}
+.dp-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:10.5px;color:var(--muted)}
+.dp-k{display:inline-block;width:10px;height:10px;margin:0 5px -1px 8px;border:1px solid var(--line)}
+.dp-k:first-child{margin-left:0}
+.dp-k.soon{background:#e6e2dc}
+.dp-k.busy{background:repeating-linear-gradient(135deg,transparent 0 2px,rgba(91,71,67,.35) 2px 3px)}
+.dp-clear{font-size:11px;border-bottom:1px solid var(--gold);padding:0}
+.dp-field[aria-invalid=true]{border-color:#8a3b2e}
+.dp-day.is-soon{color:var(--brown);cursor:pointer;background:rgba(169,139,80,.12)}
+.dp-day.is-past{color:#c2b9b0;cursor:not-allowed}
+.dp-k.soon{background:rgba(169,139,80,.25)}
+.dp-short{display:grid;gap:10px;padding:4px}
+.dp-short strong{font-family:'Cormorant Garamond',Georgia,serif;font-weight:400;font-size:22px}
+.dp-short p{font-size:12.5px;line-height:1.6;color:var(--muted);margin:0}
+.dp-yes{background:var(--brown);color:var(--paper);min-height:44px;padding:10px 14px;font-size:12px}
+.dp-no{min-height:40px;font-size:12px;border:1px solid var(--line)}
+#planner label{position:relative}

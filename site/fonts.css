@@ -1,0 +1,4 @@
+/* Open-source fonts (SIL OFL), from github.com/google/fonts. */
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:400 500;font-display:swap;src:url(fonts/CormorantGaramond.ttf) format('truetype')}
+@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:400;font-display:swap;src:url(fonts/CormorantGaramond-Italic.ttf) format('truetype')}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:400 600;font-display:swap;src:url(fonts/Manrope.ttf) format('truetype')}
