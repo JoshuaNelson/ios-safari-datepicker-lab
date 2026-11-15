@@ -52,9 +52,17 @@ for (const v of Object.keys(VERSIONS).filter(n => !only || n === only)) {
       }
     });
 
-    test('step 3 "Timing": earliest month locked, arrows', async ({ page, isMobile, browserName }) => {
+    test('step 3 "Timing": earliest month locked, short notice, arrows', async ({ page, isMobile, browserName }) => {
       await press(isMobile, fieldFor(page, 'quote-date'));
       await expect(openPop(page).getByRole('button', { name: 'Previous month' })).toBeDisabled();
+      await page.keyboard.press('Escape');
+      // Short notice: tapping a day within 14 days shows the "less than 14 days away" message, and
+      // "Choose another date" brings the calendar back (both redraw the calendar, like the arrows).
+      await press(isMobile, fieldFor(page, 'quote-date'));
+      await press(isMobile, openPop(page).locator('.dp-day.is-soon:not(.is-busy)').first());
+      await expect(openPop(page).locator('.dp-short'), 'short-notice message shown').toBeVisible();
+      await press(isMobile, openPop(page).getByRole('button', { name: 'Choose another date' }));
+      await expect(openPop(page).locator('.dp-grid'), 'calendar back after "Choose another date"').toBeVisible();
       await page.keyboard.press('Escape');
       await arrows(page, isMobile, 'quote-date');
     });

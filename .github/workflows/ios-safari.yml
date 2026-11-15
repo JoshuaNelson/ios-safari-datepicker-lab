@@ -9,7 +9,7 @@ on:
         description: Versions for the main job (comma-separated, or "all")
         default: all
       breadth:
-        description: Also run the other devices / iOS versions (original + fix8 only)
+        description: Also run the other devices / iOS versions (live + fix11 only)
         type: boolean
         default: true
 
@@ -33,7 +33,7 @@ jobs:
     env:
       DEVICE: ${{ matrix.device }}
       IOS: ${{ matrix.ios }}
-      VERSIONS: ${{ matrix.main && (inputs.versions || 'all') || 'original,fix8-final' }}
+      VERSIONS: ${{ matrix.main && (inputs.versions || 'all') || 'live-20261115a,fix11-live-final' }}
       QUICK: ${{ matrix.main && '0' || '1' }}
       OUT_DIR: ios-results
     steps:

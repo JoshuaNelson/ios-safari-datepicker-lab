@@ -1,0 +1,5 @@
+/* Fix 7 (layout): day columns share the width evenly and never grow to fit their content,
+   so a week full of "Reserved" days can't push the calendar wider than its box. Add to begin.css. */
+.dp-grid{grid-template-columns:repeat(7,minmax(0,1fr))}
+.dp-day{min-width:0;padding:0;overflow:hidden}
+.dp-day.is-busy small{max-width:100%;letter-spacing:0}

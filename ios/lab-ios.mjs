@@ -110,12 +110,23 @@ function record(r) {
 }
 
 // ---- checks --------------------------------------------------------------------------------
+// Opening the calendar is setup, not what's under test. A tap right after a page load can register as a
+// touch without a click on slower simulators, so retry (and note it) rather than misreport the arrows.
+async function openField(field) {
+  let s, early = [];
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    await tapWeb(FIELD[field]); await sleep(800);
+    s = await st();
+    if (s.open) return { s, note: attempt > 1 ? `calendar opened on attempt ${attempt}` : '' , early };
+    early.push(...s.log);
+  }
+  return { s, note: 'calendar did not open (3 attempts)', early };
+}
 async function arrowCheck(v, field, check, expect, run) {
   await load(v);
-  await tapWeb(FIELD[field]); await sleep(800);
-  const s0 = await st();
-  if (!s0.open) { record({ version: v, field, check, pass: false, note: 'calendar did not open', events: s0.log }); return; }
-  let note = '';
+  const { s: s0, note: openNote, early } = await openField(field);
+  if (!s0.open) { record({ version: v, field, check, pass: false, note: openNote, events: early }); return; }
+  let note = openNote;
   try { await run(); } catch (e) { note = 'ERROR ' + e.message.split('\n')[0]; }
   await sleep(1200);
   const s1 = await st();
@@ -126,11 +137,33 @@ async function arrowCheck(v, field, check, expect, run) {
     note: [note, s1.zoom !== 1 ? `page zoomed to ${s1.zoom}` : ''].filter(Boolean).join('; '), events: s1.log });
 }
 
+// Short notice (step 3 field): a day within 14 days shows a message; "Choose another date" goes back.
+// Both redraw the calendar, like the arrows do.
+async function shortNoticeCheck(v) {
+  await load(v);
+  const { s: s0, note: openNote, early } = await openField('quote-date');
+  if (!s0.open) { record({ version: v, field: 'quote-date', check: 'short-notice day shows message', pass: false, note: openNote, events: early }); return; }
+  const view = () => driver.execute(() => { const p = document.querySelector('.dp-pop:not([hidden])'); return p ? (p.querySelector('.dp-short') ? 'message' : p.querySelector('.dp-grid') ? 'calendar' : 'empty') : 'CALENDAR CLOSED'; });
+  let note = openNote;
+  try { await tapWeb('.dp-pop:not([hidden]) .dp-day.is-soon:not(.is-busy)'); } catch (e) { note = 'ERROR ' + e.message.split('\n')[0]; }
+  await sleep(1200);
+  let after = await view(), s1 = await st();
+  await shot(`${v}-short-notice`);
+  record({ version: v, field: 'quote-date', check: 'short-notice day shows message', before: 'calendar', after, pass: after === 'message', note, events: s1.log });
+  if (after !== 'message') return;
+  note = '';
+  try { await tapWeb('.dp-pop:not([hidden]) .dp-no'); } catch (e) { note = 'ERROR ' + e.message.split('\n')[0]; }
+  await sleep(1200);
+  after = await view(); s1 = await st();
+  await shot(`${v}-choose-another`);
+  record({ version: v, field: 'quote-date', check: '"Choose another date" returns', before: 'message', after, pass: after === 'calendar', note, events: s1.log });
+}
+
 async function tapOutsideCheck(v) {
   await load(v);
-  await tapWeb(FIELD['hello-date']); await sleep(800);
-  await st();
-  let note = '';
+  const { s: s0, note: openNote } = await openField('hello-date');
+  if (!s0.open) { record({ version: v, field: 'hello-date', check: 'tap outside closes', pass: false, note: openNote }); return; }
+  let note = openNote;
   try { await tapWeb('#heading'); } catch (e) { note = 'ERROR ' + e.message.split('\n')[0]; }
   await sleep(1000);
   const s = await st();
@@ -142,7 +175,7 @@ async function layoutCheck(v) {
   await load(v);
   // Open directly on next month (the reserved week) without relying on the arrows.
   await driver.execute(() => { const n = new Date(), d = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth() + 1, 20)); document.getElementById('hello-date').value = d.toISOString().slice(0, 10); });
-  await tapWeb(FIELD['hello-date']); await sleep(800);
+  await openField('hello-date');
   const m = await driver.execute(() => {
     const pop = document.querySelector('.dp-pop:not([hidden])'); if (!pop) return null;
     const g = pop.querySelector('.dp-grid'), vw = document.documentElement.clientWidth, r = pop.getBoundingClientRect();
@@ -170,6 +203,7 @@ try {
       if (!QUICK) await arrowCheck(v, field, 'tap Next x3, 1s apart', 3, async () => { for (let i = 0; i < 3; i++) { await tapWeb(NEXT); await sleep(1000); } });
       await arrowCheck(v, field, 'double-tap Next', 2, async () => { await centre(NEXT); await tapNative('Next month', 'double'); });
     }
+    await shortNoticeCheck(v);
     await tapOutsideCheck(v);
     await layoutCheck(v);
   }

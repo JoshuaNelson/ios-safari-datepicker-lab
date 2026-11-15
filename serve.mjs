@@ -18,6 +18,11 @@ export const VERSIONS = {
   'fix5-combined': { js: 'fix5-combined.js', css: 'fix1-touch-action.css' },
   'fix7-layout': { js: 'fix7-layout.js', css: 'fix7-layout.css' },
   'fix8-final': { js: 'fix8-final.js', css: 'fix8-final.css' },
+  'fix9-pop-guard': { js: 'fix9-pop-guard.js' },
+  'fix10-final': { js: 'fix10-final.js', css: 'fix10-final.css' },
+  // Current live version (adds the click guard, on-screen positioning, 'Others planning') and our fix on top of it.
+  'live-20261115a': { js: 'live-20261115a.js' },
+  'fix11-live-final': { js: 'fix11-live-final.js', css: 'fix11-live-final.css' },
 };
 const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'application/javascript', '.ttf': 'font/ttf', '.txt': 'text/plain', '.json': 'application/json' };
 
@@ -27,10 +32,16 @@ function busy() {
   return [8, 9, 10, 11, 12, 13, 14].map(dd => d(m + 1, dd)).concat([d(m + 2, 5), d(m + 2, 6)]);
 }
 
+// Dates other people are planning (newer picker versions mark them): days 20-21 of next month.
+function planning() {
+  const n = new Date(), y = n.getUTCFullYear(), m = n.getUTCMonth();
+  return [20, 21].map(dd => new Date(Date.UTC(y, m + 1, dd)).toISOString().slice(0, 10));
+}
+
 const server = http.createServer((req, res) => {
   if (!['GET', 'HEAD'].includes(req.method)) { res.writeHead(405).end(); return; }
   const url = new URL(req.url, 'http://lab');
-  if (url.pathname === '/api/busy') { res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }).end(JSON.stringify({ busy: busy() })); return; }
+  if (url.pathname === '/api/busy') { res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }).end(JSON.stringify({ busy: busy(), planning: planning() })); return; }
   if (url.pathname === '/' || url.pathname === '/index.html') {
     const name = url.searchParams.get('v') || 'original', v = VERSIONS[name];
     if (!v) { res.writeHead(404, { 'Content-Type': 'text/plain' }).end(`unknown version ${name}`); return; }
