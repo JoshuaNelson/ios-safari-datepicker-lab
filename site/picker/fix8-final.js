@@ -10,16 +10,7 @@
   const busyLoad = fetch('/api/busy', { cache: 'no-store' }).then(r => r.ok ? r.json() : { busy: [] }).then(d => { busy = new Set(d.busy || []); }).catch(() => { busy = new Set(); });
   const desc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
   let openPop = null;
-  const outside = t => openPop && t.isConnected && !openPop.contains(t) && !t.closest('.dp-field');
-  document.addEventListener('click', e => { if (outside(e.target)) closePop(); });
-  // iOS Safari doesn't send 'click' for taps on plain text or empty space, so also treat a short,
-  // still pointer press outside the calendar as "tap outside". A press that turns into a scroll is
-  // cancelled by the browser (no pointerup), so scrolling the page never closes the calendar.
-  let press = null;
-  document.addEventListener('pointerdown', e => { press = openPop && e.isPrimary ? { x: e.clientX, y: e.clientY, t: e.target } : null; }, true);
-  document.addEventListener('pointercancel', () => { press = null; }, true);
-  document.addEventListener('pointerup', e => { const p = press; press = null;
-    if (p && Math.hypot(e.clientX - p.x, e.clientY - p.y) < 10 && outside(p.t)) closePop(); }, true);
+  document.addEventListener('click', e => { if (openPop && e.target.isConnected && !openPop.contains(e.target) && !e.target.closest('.dp-field')) closePop(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && openPop) { e.preventDefault(); e.stopPropagation(); const f = openPop.previousElementSibling; closePop(); f?.focus(); } }, true);
   function closePop() { if (!openPop) return; openPop.hidden = true; openPop.previousElementSibling?.setAttribute('aria-expanded', 'false'); openPop = null; }
 

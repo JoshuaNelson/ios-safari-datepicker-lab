@@ -16,7 +16,6 @@ export const VERSIONS = {
   'fix3-stop-propagation': { js: 'fix3-stop-propagation.js' },
   'fix4-popup-outside-label': { js: 'fix4-popup-outside-label.js' },
   'fix5-combined': { js: 'fix5-combined.js', css: 'fix1-touch-action.css' },
-  'fix6-combined-outside-tap': { js: 'fix6-combined-outside-tap.js', css: 'fix1-touch-action.css' },
   'fix7-layout': { js: 'fix7-layout.js', css: 'fix7-layout.css' },
   'fix8-final': { js: 'fix8-final.js', css: 'fix8-final.css' },
 };
