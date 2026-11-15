@@ -84,10 +84,10 @@ async function shot(name) {
 }
 async function load(v) {
   await driver.url(`${BASE}/?v=${v}&t=${Date.now()}`);
-  await driver.waitUntil(() => driver.execute(() => document.readyState === 'complete' && !!document.querySelector('.dp-field')), { timeout: 30000 });
+  // Wait for the NEW page: Safari can still be showing the previous one when url() returns.
+  await driver.waitUntil(() => driver.execute(want => document.readyState === 'complete' && !!document.querySelector('.dp-field')
+    && document.querySelector('meta[name="picker-version"]')?.content === want, v), { timeout: 30000, timeoutMsg: `page never showed version ${v}` });
   await driver.execute(INSTRUMENT);
-  const got = await driver.execute(() => document.querySelector('meta[name="picker-version"]')?.content);
-  if (got !== v) throw new Error(`expected version ${v}, page says ${got}`);
 }
 async function centre(sel) { await driver.execute(s => document.querySelector(s)?.scrollIntoView({ block: 'center' }), sel); await sleep(700); }
 async function tapWeb(sel) { await centre(sel); await (await driver.$(sel)).click(); }
