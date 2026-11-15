@@ -30,6 +30,7 @@ const OPTS = {
     'appium:nativeWebTap': true,
     'appium:wdaLaunchTimeout': 600000, 'appium:wdaConnectionTimeout': 600000, 'appium:newCommandTimeout': 300,
     'appium:safariInitialUrl': 'about:blank',
+    'appium:isHeadless': true,                  // the workflow boots the simulator without a window; don't restart it
     'appium:simulatorStartupTimeout': 300000,   // GitHub's Macs can be slow to finish booting
     'appium:webviewConnectTimeout': 90000,      // ...and slow to expose Safari's page to the debugger
   },
@@ -71,7 +72,8 @@ const STATE = () => {
     zoom: Math.round(((window.visualViewport && window.visualViewport.scale) || 1) * 100) / 100,
     version: document.querySelector('meta[name="picker-version"]')?.content };
   l.renders = 0;
-  if (pop) { const n = pop.querySelector('[aria-label="Next month"]').getBoundingClientRect(); s.next = { x: Math.round(n.left), y: Math.round(n.top), w: Math.round(n.width), h: Math.round(n.height) }; }
+  const nb = pop && pop.querySelector('[aria-label="Next month"]');   // absent on the short-notice message
+  if (nb) { const n = nb.getBoundingClientRect(); s.next = { x: Math.round(n.left), y: Math.round(n.top), w: Math.round(n.width), h: Math.round(n.height) }; }
   return s;
 };
 const st = () => driver.execute(STATE);
@@ -198,7 +200,8 @@ try {
   for (const v of VERSIONS) {
     const fields = QUICK ? ['hello-date'] : ['hello-date', 'quote-date'];
     for (const field of fields) {
-      await arrowCheck(v, field, 'tap Next (screen tap)', 1, () => tapWeb(NEXT));
+      // Screen tap three times, each on a fresh page load, to tell a consistent failure from a one-off.
+      for (const n of [1, 2, 3]) await arrowCheck(v, field, `tap Next (screen tap) #${n}`, 1, () => tapWeb(NEXT));
       await arrowCheck(v, field, 'tap Next (accessibility tap)', 1, async () => { await centre(NEXT); await tapNative('Next month'); });
       if (!QUICK) await arrowCheck(v, field, 'tap Next x3, 1s apart', 3, async () => { for (let i = 0; i < 3; i++) { await tapWeb(NEXT); await sleep(1000); } });
       await arrowCheck(v, field, 'double-tap Next', 2, async () => { await centre(NEXT); await tapNative('Next month', 'double'); });

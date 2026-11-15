@@ -75,7 +75,7 @@ jobs:
           echo $! > video.pid
 
       - name: Run checks in iOS Safari
-        timeout-minutes: 40
+        timeout-minutes: 20
         run: node ios/lab-ios.mjs
 
       - name: Stop recording
