@@ -1,0 +1,94 @@
+name: iOS Safari (Simulator)
+
+# Manual only (Actions tab -> Run workflow). No push / pull_request triggers, so nobody outside
+# the repo can start runs. Standard macOS runners are free in public repositories.
+on:
+  workflow_dispatch:
+    inputs:
+      versions:
+        description: Versions for the main job (comma-separated, or "all")
+        default: all
+      breadth:
+        description: Also run the other devices / iOS versions (original + fix8 only)
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-safari
+  cancel-in-progress: false
+
+jobs:
+  ios:
+    name: ${{ matrix.device }} · iOS ${{ matrix.ios }}
+    runs-on: macos-26
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      # Main job always; the breadth jobs only when "breadth" is ticked.
+      matrix:
+        include: ${{ fromJSON(inputs.breadth && '[{"device":"iPhone 17","ios":"26.5","main":true},{"device":"iPhone 17 Pro Max","ios":"26.5","main":false},{"device":"iPhone 17e","ios":"26.5","main":false},{"device":"iPhone 17","ios":"26.4","main":false},{"device":"iPhone 17","ios":"26.2","main":false}]' || '[{"device":"iPhone 17","ios":"26.5","main":true}]') }}
+    env:
+      DEVICE: ${{ matrix.device }}
+      IOS: ${{ matrix.ios }}
+      VERSIONS: ${{ matrix.main && (inputs.versions || 'all') || 'original,fix8-final' }}
+      QUICK: ${{ matrix.main && '0' || '1' }}
+      OUT_DIR: ios-results
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - name: Install Appium + XCUITest driver
+        run: |
+          npm install -g appium@3
+          appium driver install xcuitest
+
+      - name: Start the lab page server
+        run: |
+          nohup node serve.mjs > server.log 2>&1 &
+          for i in $(seq 20); do curl -sf http://localhost:8080/ > /dev/null && break; sleep 1; done
+          curl -sf "http://localhost:8080/?v=original" | grep -q 'picker-version' || { echo "lab server not up"; cat server.log; exit 1; }
+
+      - name: Boot simulator
+        run: |
+          RUNTIME="iOS-${IOS//./-}"
+          UDID=$(xcrun simctl list devices available -j | jq -r --arg d "$DEVICE" --arg r "$RUNTIME" \
+            '.devices | to_entries[] | select(.key | endswith($r)) | .value[] | select(.name == $d) | .udid' | head -1)
+          if [ -z "$UDID" ]; then echo "No '$DEVICE' on $RUNTIME. Available:"; xcrun simctl list devices available; exit 1; fi
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+
+      - name: Start Appium and screen recording
+        run: |
+          mkdir -p "$OUT_DIR"
+          nohup appium --log "$PWD/appium.log" --log-level info > /dev/null 2>&1 &
+          for i in $(seq 45); do curl -sf http://127.0.0.1:4723/status > /dev/null && break; sleep 2; done
+          curl -sf http://127.0.0.1:4723/status > /dev/null || { echo "Appium did not start"; cat appium.log; exit 1; }
+          nohup xcrun simctl io "$UDID" recordVideo --codec=h264 --force "$OUT_DIR/screen.mp4" > /dev/null 2>&1 &
+          echo $! > video.pid
+
+      - name: Run checks in iOS Safari
+        timeout-minutes: 40
+        run: node ios/lab-ios.mjs
+
+      - name: Stop recording
+        if: always()
+        run: |
+          [ -f video.pid ] && kill -INT "$(cat video.pid)" || true
+          sleep 5
+
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: ios-results-${{ matrix.device }}-${{ matrix.ios }}
+          path: |
+            ios-results/
+            appium.log
+            server.log
