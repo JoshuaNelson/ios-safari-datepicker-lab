@@ -21,7 +21,7 @@ const NEXT = '.dp-pop:not([hidden]) .dp-nav[aria-label="Next month"]';
 const rows = [];
 let shotN = 0, WEB;
 
-const driver = await remote({
+const OPTS = {
   hostname: '127.0.0.1', port: 4723, path: '/', logLevel: 'warn', connectionRetryTimeout: 900000, connectionRetryCount: 0,
   capabilities: {
     platformName: 'iOS', browserName: 'Safari', 'appium:automationName': 'XCUITest',
@@ -30,8 +30,16 @@ const driver = await remote({
     'appium:nativeWebTap': true,
     'appium:wdaLaunchTimeout': 600000, 'appium:wdaConnectionTimeout': 600000, 'appium:newCommandTimeout': 300,
     'appium:safariInitialUrl': 'about:blank',
+    'appium:simulatorStartupTimeout': 300000,   // GitHub's Macs can be slow to finish booting
+    'appium:webviewConnectTimeout': 90000,      // ...and slow to expose Safari's page to the debugger
   },
-});
+};
+// Session start is the flaky part on CI: try up to 3 times.
+let driver;
+for (let attempt = 1; ; attempt++) {
+  try { driver = await remote(OPTS); break; }
+  catch (e) { console.log(`session attempt ${attempt} failed: ${e.message.split('\n')[0]}`); if (attempt >= 3) throw e; await sleep(15000); }
+}
 
 // ---- in-page instrumentation -------------------------------------------------------------
 const INSTRUMENT = () => {
@@ -150,6 +158,9 @@ let harnessError = null;
 try {
   WEB = await driver.getContext();
   const ua = await (async () => { await driver.url(`${BASE}/?v=original`); return driver.execute(() => navigator.userAgent); })();
+  // Warm-up: the very first tap of a Safari session can be swallowed (touch, but no click). Spend it here.
+  await driver.execute(INSTRUMENT); await tapWeb('#intro'); await sleep(1000);
+  console.log('warm-up tap events:', JSON.stringify((await st()).log));
   console.log(`Device: ${DEVICE}, iOS ${IOS}\nUser agent: ${ua}\nContexts: ${JSON.stringify(await driver.getContexts())}\nVersions: ${VERSIONS.join(', ')}`);
   for (const v of VERSIONS) {
     const fields = QUICK ? ['hello-date'] : ['hello-date', 'quote-date'];
